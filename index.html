@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="description" content="preprocessData : An R package to allow `R CMD preprocessData` to run user-code to tidy raw data, allow data versioning, integrity checks, documentation, as part of the R package build process ">
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>preprocessData</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/RGLab/preprocessData">View on GitHub</a>
+
+          <h1 id="project_title">preprocessData</h1>
+          <h2 id="project_tagline">An R package to allow `R CMD preprocessData` to run user-code to tidy raw data, allow data versioning, integrity checks, documentation, as part of the R package build process </h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/RGLab/preprocessData/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/RGLab/preprocessData/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <h1>
+<a id="preprocessdata" class="anchor" href="#preprocessdata" aria-hidden="true"><span class="octicon octicon-link"></span></a>preprocessData</h1>
+
+<p>An R package to allow <code>R CMD preprocessData packagename</code> to run some preprocessing (i.e. data tidying) on raw data by running code in <code>packagename/data-raw</code> and generate standardied data sets or objects in <code>packagename/data</code>. The package will verify whether data has chanaged based on a digest of the data objects, and enables data versioning using the DataVersion string in the DESCRIPTION file. Documentation, if available as roxygen2 code in the .R files, will be extracted and placed in the "/R" directory.</p>
+
+<h2>
+<a id="sourcing-other-r-files-from-datasetsr" class="anchor" href="#sourcing-other-r-files-from-datasetsr" aria-hidden="true"><span class="octicon octicon-link"></span></a>Sourcing other R files from <code>datasets.R</code>
+</h2>
+
+<p>Your code must source other R files via <code>sys.source("myotherRfile.R",env=topenv())</code>, otherwise bad things can happen.</p>
+
+<h2>
+<a id="origins" class="anchor" href="#origins" aria-hidden="true"><span class="octicon octicon-link"></span></a>Origins</h2>
+
+<p>This brings together ideas by Robert Gentleman,  Yihui Xie, Hadley Wickham, and many others. Most of these concepts have been around as long as R and the idea of <em>literate programming</em>. Effort and time invested by the people above in building fantastic tools has made generating reproducible research easier than ever before. </p>
+
+<h2>
+<a id="motivation" class="anchor" href="#motivation" aria-hidden="true"><span class="octicon octicon-link"></span></a>Motivation</h2>
+
+<p>Our group needs to standardize a lot of data across many projects and distribute it to many people. The data can change over time. We need to ensure they all work with the same version of the data. </p>
+
+<p>In general, if you work in R, you'll have raw data that you'd like to clean up, preprocess, or otherwise standardize in order to use it in your own projects or share it with others. You could do this with a series of shell scripts, and R script, a <code>knitr</code> markdown document, or any other number of ways to generate some <code>.csv</code> files or R <code>data.frames</code> or <code>data.tables</code> or other complex R objects that represent your data. You might then save these into the <code>/data</code> directory of an R data package, build and distribute. </p>
+
+<p>If the data change and you're using the R package system, you get versioning for free, as long as you're aware the data have change and you remember to bump the version number. So, just process your data again and update the contents of <code>/data</code> and you're good to go.</p>
+
+<p>R packages process <em>markdown</em> or <em>Sweave</em> documents in the <code>/vignettes</code> directory during the build process, but that doesn't quite fit our needs. The vignettes may rely on some of the data they are supposed to generate and the vignette build process needs to take no more than a certain amount of time in order for packages to meet CRAN and Bioconductor guidelines. Finally, do you really need to generate a 50-page document detailing how the data was cleaned each time the package is built? Ideally, we'd like to separete out the data preprocessing from the build stage, but still have it be an integral part of the R package development process. </p>
+
+<h2>
+<a id="how-it-works" class="anchor" href="#how-it-works" aria-hidden="true"><span class="octicon octicon-link"></span></a>How it works</h2>
+
+<p>That's where <code>preprocessData</code> comes in. It enables the <code>R CMD preprocessData</code> command. Based upon <code>BiocCheck</code> developed by the BioConductor team, it installs a script (requires admin rights) into <code>$R_HOME/bin</code> that enables <code>R CMD preprocessData packagename</code> which does the following:</p>
+
+<ul>
+<li>Requires that you have a <code>DataVersion: x.y.z</code> string in the package <code>DESCRIPTION</code> file.</li>
+<li>Looks for <code>datasets.R</code>  under the directory <code>packagename/data-raw</code> and sources it in its own environment. <code>datasets.R</code> can source other R files (must be done via <code>sys.source("myotherRfile.R",env=topenv())</code> )</li>
+<li>Computes a digest of the R objects that are created.</li>
+<li>Compares this against the contents of <code>DATADIGEST</code> if it's available.</li>
+<li>When the digests don't match, the data has changed, and the package requires that you update the <code>DataVersion</code> string.</li>
+<li>When all is well, it writes a new <code>DATADIGEST</code> to the package source directory and writes the data objects to the <code>/data</code> directory.</li>
+<li>Extracts <code>roxygen2</code> documentation from the <code>R</code> files that matches the R objects and places it in <code>/R</code> so it can be processed by <code>roxygenize</code>. </li>
+</ul>
+
+<p>The <code>datasets.R</code> file and any files it sources can read raw data from any source which may or may not be in <code>/inst/extdata</code>. They should tidy the data and standardize it as necessary.</p>
+
+<p><strong>To reiterate</strong></p>
+
+<ul>
+<li>
+<p>The <code>preprocessData</code> package takes care of saving the standardized data to the <code>/data</code> directory as <code>packagename.rda</code> so that it can be loaded with <code>data(packagename)</code>, provided it </p>
+
+<ol>
+<li>Has not changed based on an md5 digest of the objects.</li>
+<li>If it has changed, the DataVersion string has been incremented in the DESCRIPTION file.</li>
+</ol>
+</li>
+<li><p>The package extracts <code>roxygen2</code> documentation frmo <code>/data-raw</code>,  and places it in <code>/R/packagename.R</code>   </p></li>
+<li>
+<code>R CMD build packagename</code> generates <code>packagename_x.y.z.tar.gz</code> with documented and standardized data available via the usual <code>data()</code> mechanism. </li>
+<li>Unless <code>data-raw</code> is placed in <code>.Rbuildignore</code> the code to generate the data sets is distributed with the package.</li>
+</ul>
+
+<p><strong>Shortcuts and convenience functions</strong>
+The package provides an R function to process, document, and build a package with a single call. 
+<code>buildDataSetPackage("mypackage")</code> is equivalent to:   </p>
+
+<p><code>$ R CMD preprocessData mypackage</code><br>
+<code>$ Rscript -e 'roxygen2::roxygenize("mypackage")'</code><br>
+<code>$ R CMD build mypackage</code>  </p>
+
+<p><code>dataVersion("packagename")</code> returns the DataVersion of the specified package.
+<code>datapackage.skeleton()</code> invokes <code>package.skeleton()</code> and populates the directory with additional information required by <code>preprocessData</code>. </p>
+
+<h2>
+<a id="benefits" class="anchor" href="#benefits" aria-hidden="true"><span class="octicon octicon-link"></span></a>Benefits</h2>
+
+<p>Using the pacakge build system we get:</p>
+
+<ul>
+<li>Versioning of data and package versioning.</li>
+<li>Relatively standardized build, install, and distribution mechanism</li>
+<li>Enforced dependencies between packages ( meaning we can have packages that wrap up an analysis of a project and depend on a specific version of a data package).</li>
+<li>Standard mechanism to run unit tests to verify the integrity of the data (these go into <code>/tests</code> and are run automatically during build). </li>
+<li>All of this improves reproducibility and takes some of the worry out of working on multiple projects simultaneously.</li>
+</ul>
+
+<h2>
+<a id="ongoing-work" class="anchor" href="#ongoing-work" aria-hidden="true"><span class="octicon octicon-link"></span></a>Ongoing work</h2>
+
+<p>While tools like <code>packrat</code> and others aim to do the above by fixing the version of all packages used for a project into a local library bundle that can be distributed, this can be a bit of overkill, particularly if all consumers of a data set are using the same environment. Recording the <code>sessionInfo()</code> may be sufficient in many cases (since we are mostly only concerned with data tidying). Some new tools from Robert Gentleman's group could enable users to store and verify the versions of packages used for preprocessing data sets between package builds. This remains to be explored further.</p>
+
+<h2>
+<a id="known-limitations" class="anchor" href="#known-limitations" aria-hidden="true"><span class="octicon octicon-link"></span></a>Known limitations.</h2>
+
+<ul>
+<li>The current code parses a single R file named <code>datasets.R</code>. This file can source other .R files under <code>/data-raw</code>. This must be done via <code>sys.source("myotherRfile.R",env=topenv())</code>.</li>
+<li>Documentation is extracted from all .R files under <code>/data-raw</code>, and collated and matched to the data objects generated by the .R files. No checking is done for name collisions.</li>
+<li>A file named <code>packagename.R</code> is generated under <code>/R</code> containing the roxygen2 documentation for the data sets. This overwrites any .R file with the same name already present under the <code>/R</code> directory without warning.</li>
+</ul>
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">preprocessData maintained by <a href="https://github.com/RGLab">RGLab</a></p>
+        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+    
+
+  </body>
+</html>
