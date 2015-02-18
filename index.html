@@ -10,7 +10,7 @@
 
 <meta name="author" content="Greg Finak gfinak@fredhutch.org" />
 
-<meta name="date" content="2015-02-11" />
+<meta name="date" content="2015-02-18" />
 
 <title>Using preprocessData</title>
 
@@ -54,7 +54,7 @@ code > span.er { color: #ff0000; font-weight: bold; }
 <div id="header">
 <h1 class="title">Using preprocessData</h1>
 <h4 class="author"><em>Greg Finak <a href="mailto:gfinak@fredhutch.org">gfinak@fredhutch.org</a></em></h4>
-<h4 class="date"><em>2015-02-11</em></h4>
+<h4 class="date"><em>2015-02-18</em></h4>
 </div>
 
 
@@ -75,8 +75,8 @@ code > span.er { color: #ff0000; font-weight: bold; }
 <div id="how-to-build-a-data-package-that-uses-preprocessdata" class="section level2">
 <h2>How to build a data package that uses preprocessData</h2>
 <p>We assume we want to build a data package called <code>myDataPackage</code>. We load the <code>preprocessData</code> library and use its convenience functions to get started.</p>
-<pre class="sourceCode r"><code class="sourceCode r">test&lt;-<span class="st">&quot;&quot;</span>
-<span class="kw">library</span>(preprocessData)</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(preprocessData)
+<span class="kw">datapackage.skeleton</span>(<span class="st">&quot;MyDataPackage&quot;</span>, <span class="dt">path=</span><span class="st">&quot;/tmp&quot;</span>,<span class="dt">list=</span><span class="st">&quot;test&quot;</span>)</code></pre>
 <pre><code>## Creating directories ...
 ## Creating DESCRIPTION ...
 ## Creating NAMESPACE ...
@@ -97,13 +97,13 @@ mat&lt;-<span class="kw">spread</span>(<span class="kw">data.frame</span>(<span 
                         <span class="st">&quot;Subject_2&quot;</span>,<span class="st">&quot;Subject_3&quot;</span>,<span class="st">&quot;Subject_4&quot;</span>))),
           <span class="dt">key=</span>subject_id,<span class="dt">value=</span>measurement)
 <span class="kw">head</span>(mat)</code></pre>
-<pre><code>##   sample Subject_1 Subject_2 Subject_3 Subject_4
-## 1      1 0.3945294  1.854947  5.614858  9.314211
-## 2      2 1.0600866  2.384502  5.067004  8.517994
-## 3      3 1.6980089  0.543282  4.520185 10.251242
-## 4      4 0.2127280  3.722672  3.723130 12.024117
-## 5      5 2.3307221  1.763601  6.780522 12.071278
-## 6      6 1.3432476  2.891064  6.877567 10.774765</code></pre>
+<pre><code>##   sample   Subject_1 Subject_2 Subject_3 Subject_4
+## 1      1  0.86636743  2.369961  5.277653  8.012288
+## 2      2 -0.08818398  3.178116  4.553602  8.377705
+## 3      3  0.86288045  2.514115  6.094950 10.615961
+## 4      4  0.24844555  2.428815  5.481593  9.870293
+## 5      5  1.13870161  2.970794  5.915365  9.926726
+## 6      6  2.18279104  1.766488  6.312192 10.013972</code></pre>
 <p>We pretend that our raw data arrives as above: something is measured for four subjects, 100 times per subject, but each subject’s data is in a separate column. This is “wide” data, and generally doesn’t follow the tidy data paradigm of one variable per column. This data file will live in the <code>inst/extdata</code> directory beneath the package source tree.</p>
 <p>We create <code>inst/extdata</code> beneath the package source tree and move our “raw data” into place.</p>
 <pre class="sourceCode r"><code class="sourceCode r"><span class="kw">dir.create</span>(<span class="dt">path=</span><span class="st">&quot;/tmp/MyDataPackage/inst/extdata&quot;</span>,<span class="dt">recursive =</span> <span class="ot">TRUE</span>)
@@ -117,12 +117,12 @@ study_processed&lt;-<span class="kw">gather</span>(data,<span class="dt">key=</s
 <p>Let’s see what this looks like:</p>
 <pre class="sourceCode r"><code class="sourceCode r"><span class="kw">head</span>(study_processed)</code></pre>
 <pre><code>##   sample subject_id measurement
-## 1      1  Subject_1   0.3945294
-## 2      2  Subject_1   1.0600866
-## 3      3  Subject_1   1.6980089
-## 4      4  Subject_1   0.2127280
-## 5      5  Subject_1   2.3307221
-## 6      6  Subject_1   1.3432476</code></pre>
+## 1      1  Subject_1  0.86636743
+## 2      2  Subject_1 -0.08818398
+## 3      3  Subject_1  0.86288045
+## 4      4  Subject_1  0.24844555
+## 5      5  Subject_1  1.13870161
+## 6      6  Subject_1  2.18279104</code></pre>
 <p>Our data are now in long format.</p>
 <ul>
 <li>This R code is placed in an <code>.R</code> file entitled <code>process_assay.R</code> within the <code>data-raw</code> directory.</li>
